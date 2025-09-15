@@ -8,32 +8,27 @@ const textVisible = ref(false)
 const progressWidth = ref(0)
 const stars = ref([])
 const currentStep = ref(0)
-
-const goHome = () => {
-  router.push({ name: 'Home' })
-}
-
-// Onboarding steps with better mobile content
-const onboardingSteps = [
-  {
-    title: "SumStar",
-    subtitle: "KYCsiz Yulduzlar Sotib Oling",
-    description: "Shaxsni tasdiqlashsiz raqamli yulduzlarni bir zumda sotib oling"
-  },
-  {
-    title: "Tez va Xavfsiz",
-    subtitle: "Bir Lahzalik Tranzaksiyalar",
-    description: "Harbiy darajadagi xavfsizlik bilan chaqmoq tezligida xaridlar"
-  },
-  {
-    title: "Global Kirish",
-    subtitle: "Butun Dunyoda Mavjud",
-    description: "Istalgan joydan, istalgan vaqtda - hech qanday cheklovlarsiz"
-  }
-]
+const isExpanded = ref(false)
+const isFullscreen = ref(false)
+const viewportHeight = ref(window.innerHeight)
 
 onMounted(() => {
-  // Text animation
+  if (window.Telegram?.WebApp) {
+    postTelegramEvent('web_app_ready')
+
+    postTelegramEvent('web_app_request_viewport')
+
+    window.Telegram.WebApp.onEvent('viewportChanged', handleViewportChange)
+
+    setTimeout(() => {
+      expandApp()
+    }, 1000)
+
+    setTimeout(() => {
+      requestFullscreen()
+    }, 2000)
+  }
+
   setTimeout(() => textVisible.value = true, 500)
 
   setTimeout(() => {
@@ -42,7 +37,6 @@ onMounted(() => {
       width += 0.8
       progressWidth.value = width
 
-      // Update step based on progress
       if (width >= 33 && currentStep.value === 0) {
         currentStep.value = 1
       } else if (width >= 66 && currentStep.value === 1) {
@@ -65,12 +59,86 @@ onMounted(() => {
     pulseDelay: `${Math.random() * 3}s`
   }))
 })
+
+const goHome = () => {
+  router.push({ name: 'Home' })
+}
+
+const expandApp = () => {
+  postTelegramEvent('web_app_expand')
+  isExpanded.value = true
+}
+
+const requestFullscreen = () => {
+  postTelegramEvent('web_app_request_fullscreen')
+  isFullscreen.value = true
+}
+
+const exitFullscreen = () => {
+  postTelegramEvent('web_app_exit_fullscreen')
+  isFullscreen.value = false
+}
+
+const handleViewportChange = () => {
+  if (window.Telegram?.WebApp) {
+    const viewport = window.Telegram.WebApp.viewportHeight
+    viewportHeight.value = viewport
+    isExpanded.value = window.Telegram.WebApp.isExpanded
+  }
+}
+
+const postTelegramEvent = (eventType, eventData = {}) => {
+  if (window.Telegram?.WebApp) {
+    // For web version - use postMessage
+    if (window.parent && window.parent !== window) {
+      const data = JSON.stringify({
+        eventType,
+        eventData
+      })
+      window.parent.postMessage(data, 'https://web.telegram.org')
+    }
+    // For desktop/mobile - use TelegramWebviewProxy
+    else if (window.TelegramWebviewProxy?.postEvent) {
+      const data = JSON.stringify(eventData)
+      window.TelegramWebviewProxy.postEvent(eventType, data)
+    }
+    // For Windows Phone - use external.notify
+    else if (window.external?.notify) {
+      const data = JSON.stringify({
+        eventType,
+        eventData
+      })
+      window.external.notify(data)
+    }
+  }
+}
+
+// Onboarding steps with better mobile content
+const onboardingSteps = [
+  {
+    title: "SumStar",
+    subtitle: "KYCsiz Yulduzlar Sotib Oling",
+    description: "Shaxsni tasdiqlashsiz raqamli yulduzlarni bir zumda sotib oling"
+  },
+  {
+    title: "Tez va Xavfsiz",
+    subtitle: "Bir Lahzalik Tranzaksiyalar",
+    description: "Harbiy darajadagi xavfsizlik bilan chaqmoq tezligida xaridlar"
+  },
+  {
+    title: "Global Kirish",
+    subtitle: "Butun Dunyoda Mavjud",
+    description: "Istalgan joydan, istalgan vaqtda - hech qanday cheklovlarsiz"
+  }
+]
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black overflow-hidden">
+  <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black overflow-hidden"
+      :style="{ height: isFullscreen ? '100vh' : `${viewportHeight}px` }"
+  >
 
-    <!-- Enhanced star field background -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div
           v-for="(star, i) in stars"
@@ -84,7 +152,6 @@ onMounted(() => {
         }"
       ></div>
 
-      <!-- Added floating star particles for more visual interest -->
       <div class="absolute inset-0">
         <div class="floating-star" style="left: 20%; top: 15%; animation-delay: 0s;">⭐</div>
         <div class="floating-star" style="left: 80%; top: 25%; animation-delay: 1s;">✨</div>
@@ -93,20 +160,32 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Enhanced mobile-optimized content with step progression -->
+    <div class="absolute top-4 right-4 z-20 flex space-x-2" v-if="window.Telegram?.WebApp">
+      <button
+          @click="expandApp"
+          v-if="!isExpanded"
+          class="px-3 py-1 bg-blue-600 text-white text-xs rounded-full opacity-70 hover:opacity-100"
+      >
+        Kengaytirish
+      </button>
+      <button
+          @click="isFullscreen ? exitFullscreen() : requestFullscreen()"
+          class="px-3 py-1 bg-purple-600 text-white text-xs rounded-full opacity-70 hover:opacity-100"
+      >
+        {{ isFullscreen ? 'Chiqish' : 'To\'liq ekran' }}
+      </button>
+    </div>
+
     <div class="relative flex flex-col items-center justify-center min-h-screen z-10 px-8 max-w-sm mx-auto text-center">
 
-      <!-- Dynamic content based on current step -->
       <div
           class="transition-all duration-1000 ease-out mb-8"
           :class="{ 'opacity-100 translate-y-0': textVisible, 'opacity-0 translate-y-8': !textVisible }"
       >
-        <!-- Main logo with enhanced shimmer -->
         <h1 class="text-7xl font-black mb-6 shimmer-logo tracking-tight leading-none">
           {{ onboardingSteps[currentStep].title }}
         </h1>
 
-        <!-- Updated subtitle to "Buy Stars without KYC" -->
         <div class="space-y-4">
           <p class="text-xl text-yellow-400 font-bold">
             {{ onboardingSteps[currentStep].subtitle }}
@@ -118,12 +197,10 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Enhanced progress section with step indicators -->
       <div
           class="transition-all duration-1000 delay-300 w-full"
           :class="{ 'opacity-100': textVisible, 'opacity-0': !textVisible }"
       >
-        <!-- Step indicators -->
         <div class="flex justify-center space-x-2 mb-6">
           <div
               v-for="(step, index) in onboardingSteps"
@@ -133,7 +210,6 @@ onMounted(() => {
           ></div>
         </div>
 
-        <!-- Progress bar -->
         <div class="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mb-4">
           <div
               class="h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-full transition-all duration-500 ease-out"
@@ -142,19 +218,16 @@ onMounted(() => {
         </div>
 
         <div class="flex justify-between items-center">
-          <!-- Translated loading text to Uzbek -->
           <span class="text-sm text-gray-400">{{ Math.round(progressWidth) }}% Yuklanmoqda...</span>
           <span class="text-xs text-gray-500">{{ currentStep + 1 }}/3 Qadam</span>
         </div>
       </div>
 
-      <!-- Added feature highlights for mobile -->
       <div
           class="mt-8 transition-all duration-1000 delay-500"
           :class="{ 'opacity-100': textVisible, 'opacity-0': !textVisible }"
       >
         <div class="flex justify-center space-x-6 text-xs text-gray-500">
-          <!-- Translated feature highlights to Uzbek -->
           <div class="flex items-center space-x-1">
             <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
             <span>KYCsiz</span>
@@ -174,7 +247,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Enhanced shimmer effect */
 @keyframes shimmer {
   0% {
     background-position: -300px 0;
@@ -208,7 +280,6 @@ onMounted(() => {
   text-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
 }
 
-/* Enhanced star animations */
 @keyframes star-twinkle {
   0%, 100% {
     opacity: 0.4;
@@ -224,7 +295,6 @@ onMounted(() => {
   animation: star-twinkle 2.5s ease-in-out infinite;
 }
 
-/* Added floating star animations for visual appeal */
 @keyframes float {
   0%, 100% {
     transform: translateY(0px) rotate(0deg);
