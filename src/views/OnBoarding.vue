@@ -13,9 +13,9 @@
 
   const floatingLotties = [
     { src: '/animations/skullflower-12626.json', top: '15%', left: '10%', size: 'w-12 h-12 sm:w-16 sm:h-16', bgColor: 'bg-purple-500' },
-    { src: 'https://nft.fragment.com/gift/durovscap-1727.lottie.json', top: '25%', right: '12%', size: 'w-12 h-12 sm:w-16 sm:h-16', bgColor: 'bg-gray-400' },
-    { src: 'https://nft.fragment.com/gift/deskcalendar-67890.lottie.json', bottom: '30%', left: '8%', size: 'w-12 h-12 sm:w-16 sm:h-16', bgColor: 'bg-amber-600' },
-    { src: 'https://nft.fragment.com/gift/deskcalendar-11223.lottie.json', bottom: '20%', right: '10%', size: 'w-12 h-12 sm:w-16 sm:h-16', bgColor: 'bg-yellow-500' },
+    { src: '/animations/skullflower-12626.json', top: '25%', right: '12%', size: 'w-12 h-12 sm:w-16 sm:h-16', bgColor: 'bg-gray-400' },
+    { src: '/animations/skullflower-12626.json', bottom: '30%', left: '8%', size: 'w-12 h-12 sm:w-16 sm:h-16', bgColor: 'bg-amber-600' },
+    { src: '/animations/skullflower-12626.json', bottom: '20%', right: '10%', size: 'w-12 h-12 sm:w-16 sm:h-16', bgColor: 'bg-yellow-500' },
   ]
 
   // FloatingLottie refs
