@@ -17,6 +17,7 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@telegram-apps/sdk": "^3.11.5",
     "@vitejs/plugin-vue": "^6.0.1",
     "vite": "^7.1.2"
   }
