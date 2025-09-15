@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [vue(),tailwindcss()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'), // 👈 shu alias
+      '@': path.resolve(__dirname, './src'), 
     },
   },
+  base: process.env.NODE_ENV === 'production' ? '/starsum/' : '/',
 })
